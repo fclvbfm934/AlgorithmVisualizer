@@ -1,3 +1,7 @@
+'use strict';
+
+const Integer = require('./integer');
+
 const random = (N, M, min, max) => {
   if (!N) N = 10;
   if (!M) M = 10;
@@ -7,14 +11,14 @@ const random = (N, M, min, max) => {
   for (var i = 0; i < N; i++) {
     D.push([]);
     for (var j = 0; j < M; j++) {
-      D[i].push((Math.random() * (max - min + 1) | 0) + min);
+      D[i].push(Integer.random(min, max));
     }
   }
   return D;
 };
 
-const randomSorted = (N, M, min, max)=> {
-  return this.random(N, M, min, max).map(function (arr) {
+const randomSorted = (N, M, min, max) => {
+  return random(N, M, min, max).map(function (arr) {
     return arr.sort(function (a, b) {
       return a - b;
     });

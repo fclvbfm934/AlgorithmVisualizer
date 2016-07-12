@@ -1,11 +1,15 @@
+'use strict';
+
 const app = require('../../app');
 
 module.exports = () => {
   $(document).on('click', 'a', function (e) {
-    console.log(e);
-    e.preventDefault();
-    if (!window.open($(this).attr('href'), '_blank')) {
-      alert('Please allow popups for this site');
+    const href = $(this).attr('href');
+    if (/^(https?:\/\/).+/.test(href)) {
+      e.preventDefault();
+      if (!window.open(href, '_blank')) {
+        alert('Please allow popups for this site');
+      }
     }
   });
 

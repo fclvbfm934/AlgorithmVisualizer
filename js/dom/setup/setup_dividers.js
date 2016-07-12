@@ -1,4 +1,7 @@
+'use strict';
+
 const app = require('../../app');
+const resizeWorkspace = require('../resize_workspace');
 
 const addDividerToDom = (divider) => {
   const [vertical, $first, $second] = divider;
@@ -8,10 +11,9 @@ const addDividerToDom = (divider) => {
   const $divider = $('<div class="divider">');
 
   let dragging = false;
-  if (vertical) {
+  if (vertical === 'v') {
     $divider.addClass('vertical');
-
-    let _left = -thickness / 2;
+    const _left = -thickness / 2;
     $divider.css({
       top: 0,
       bottom: 0,
@@ -37,8 +39,7 @@ const addDividerToDom = (divider) => {
         $first.css('right', (100 - percent) + '%');
         $second.css('left', percent + '%');
         x = pageX;
-        app.getTracerManager().resize();
-        $('.files_bar > .wrapper').scroll();
+        resizeWorkspace();
       }
     });
 
@@ -47,7 +48,6 @@ const addDividerToDom = (divider) => {
     });
 
   } else {
-
     $divider.addClass('horizontal');
     const _top = -thickness / 2;
     $divider.css({
@@ -75,7 +75,7 @@ const addDividerToDom = (divider) => {
         $first.css('bottom', (100 - percent) + '%');
         $second.css('top', percent + '%');
         y = pageY;
-        app.getTracerManager().resize();
+        resizeWorkspace();
       }
     });
 
@@ -96,4 +96,4 @@ module.exports = () => {
   for (let i = 0; i < dividers.length; i++) {
     addDividerToDom(dividers[i]);
   }
-}
+};

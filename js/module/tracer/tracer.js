@@ -1,21 +1,34 @@
+'use strict';
+
+const app = require('../../app');
+
 const {
   toJSON,
   fromJSON
 } = require('../../tracer_manager/util/index');
 
-function Tracer(name) {
-  this.module = this.constructor;
-  this.capsule = this.manager.allocate(this);
-  $.extend(this, this.capsule);
-  this.setName(name);
-  return this.isNew;
-}
+class Tracer {
+  static getClassName() {
+    return 'Tracer';
+  }
 
-Tracer.prototype = {
+  constructor(name) {
+    this.module = this.constructor;
 
-  constructor: Tracer,
-  name: 'Tracer',
-  manager: null,
+    this.color = {
+      selected: '#2962ff',
+      notified: '#f50057',
+      visited: '#f50057',
+      left: '#616161',
+      default: '#bdbdbd'
+    };
+
+    this.manager = app.getTracerManager();
+    this.capsule = this.manager.allocate(this);
+    $.extend(this, this.capsule);
+
+    this.setName(name);
+  }
 
   _setData(...args) {
     this.manager.pushStep(this.capsule, {
@@ -23,19 +36,19 @@ Tracer.prototype = {
       args: toJSON(args)
     });
     return this;
-  },
+  }
 
   _clear() {
     this.manager.pushStep(this.capsule, {
       type: 'clear'
     });
     return this;
-  },
+  }
 
-  _wait() {
-    this.manager.newStep();
+  _wait(line) {
+    this.manager.newStep(line);
     return this;
-  },
+  }
 
   processStep(step, options) {
     const {
@@ -51,7 +64,7 @@ Tracer.prototype = {
         this.clear();
         break;
     }
-  },
+  }
 
   setName(name) {
     let $name;
@@ -62,40 +75,54 @@ Tracer.prototype = {
       $name = this.$container.find('span.name');
     }
     $name.text(name || this.defaultName);
-  },
+  }
 
   setData() {
     const data = toJSON(arguments);
     if (!this.isNew && this.lastData === data) {
       return true;
     }
-    this.isNew = this.capsule.isNew = false;
     this.lastData = this.capsule.lastData = data;
     return false;
-  },
+  }
 
   resize() {
-  },
+  }
+
   refresh() {
-  },
+  }
+
   clear() {
-  },
+  }
 
   attach(tracer) {
-    if (tracer.module === LogTracer) {
-      this.logTracer = tracer;
+    switch (tracer.module) {
+      case LogTracer:
+        this.logTracer = tracer;
+        break;
+      case ChartTracer:
+        this.chartTracer = tracer;
+        break;
     }
     return this;
-  },
+  }
+
+  palette(color) {
+    $.extend(this.color, color);
+    return this;
+  }
 
   mousedown(e) {
-  },
+  }
+
   mousemove(e) {
-  },
+  }
+
   mouseup(e) {
-  },
+  }
+
   mousewheel(e) {
   }
-};
+}
 
 module.exports = Tracer;

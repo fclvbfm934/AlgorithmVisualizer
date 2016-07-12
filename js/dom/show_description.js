@@ -23,7 +23,7 @@ module.exports = (data) => {
 
     } else if (isArray(value)) {
 
-      const $ul = $('<ul>');
+      const $ul = $('<ul class="applications">');
       $container.append($ul);
 
       value.forEach((li) => {
@@ -32,11 +32,17 @@ module.exports = (data) => {
 
     } else if (typeof value === 'object') {
 
-      const $ul = $('<ul>');
+      const $ul = $('<ul class="complexities">');
       $container.append($ul);
 
       each(value, (prop) => {
-        $ul.append($('<li>').append($('<strong>').html(prop)).append(` ${value[prop]}`));
+        const $wrapper = $('<div class="complexity">');
+        const $type = $('<span class="complexity-type">').html(`${prop}: `);
+        const $value = $('<span class="complexity-value">').html(`${value[prop]}`);
+
+        $wrapper.append($type).append($value);
+
+        $ul.append($('<li>').append($wrapper));
       });
     }
   });

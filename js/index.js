@@ -5,7 +5,6 @@ const app = require('./app');
 const AppConstructor = require('./app/constructor');
 const DOM = require('./dom');
 const Server = require('./server');
-
 const modules = require('./module');
 
 const {
@@ -22,6 +21,8 @@ const {
 } = require('./utils');
 
 const {
+  getHashValue,
+  getParameterByName,
   getPath
 } = require('./server/helpers');
 
@@ -31,7 +32,6 @@ RSVP.on('error', function (reason) {
 });
 
 $(() => {
-
   // initialize the application and attach in to the instance module
   const appConstructor = new AppConstructor();
   extend(true, app, appConstructor);
@@ -42,6 +42,11 @@ $(() => {
   Server.loadCategories().then((data) => {
     app.setCategories(data);
     DOM.addCategories();
+
+    //enable search feature
+    DOM.enableSearch ();
+    //enable fullscreen feature
+    DOM.enableFullScreen ();
 
     // determine if the app is loading a pre-existing scratch-pad
     // or the home page
@@ -67,4 +72,18 @@ $(() => {
     }
 
   });
+
+  Server.loadWikiList().then((data) => {
+    app.setWikiList(data.wikis);
+
+    DOM.showWiki('Tracer');
+  });
+
+  var v1LoadedScratch = getHashValue('scratch-paper');
+  var v2LoadedScratch = getParameterByName('scratch-paper');
+  var vLoadedScratch = v1LoadedScratch || v2LoadedScratch;
+  if (vLoadedScratch) {
+    window.location.href = window.location.protocol + '//' + window.location.host + window.location.pathname + '#path=scratch/' + vLoadedScratch;
+  }
+
 });

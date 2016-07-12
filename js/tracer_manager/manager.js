@@ -1,5 +1,15 @@
 'use strict';
 
+const app = require('../app');
+const ModuleContainer = require('../dom/module_container');
+const TopMenu = require('../dom/top_menu');
+
+const {
+  each,
+  extend,
+  grep
+} = $;
+
 const stepLimit = 1e6;
 
 const TracerManager = function () {
@@ -13,8 +23,7 @@ TracerManager.prototype = {
 
   add(tracer) {
 
-    const $container = $('<section class="module_wrapper">');
-    $('.module_container').append($container);
+    const $container = ModuleContainer.create();
 
     const capsule = {
       module: tracer.module,
@@ -33,7 +42,7 @@ TracerManager.prototype = {
     let selectedCapsule = null;
     let count = 0;
 
-    $.each(this.capsules, (i, capsule) => {
+    each(this.capsules, (i, capsule) => {
       if (capsule.module === newTracer.module) {
         count++;
         if (!capsule.allocated) {
@@ -51,7 +60,8 @@ TracerManager.prototype = {
       selectedCapsule = this.add(newTracer);
     }
 
-    selectedCapsule.defaultName = `${newTracer.name} ${count}`;
+    const className = newTracer.module.getClassName();
+    selectedCapsule.defaultName = `${className} ${count}`;
     selectedCapsule.order = this.order++;
     return selectedCapsule;
   },
@@ -59,7 +69,7 @@ TracerManager.prototype = {
   deallocateAll() {
     this.order = 0;
     this.reset();
-    $.each(this.capsules, (i, capsule) => {
+    each(this.capsules, (i, capsule) => {
       capsule.allocated = false;
     });
   },
@@ -67,7 +77,7 @@ TracerManager.prototype = {
   removeUnallocated() {
     let changed = false;
 
-    this.capsules = $.grep(this.capsules, (capsule) => {
+    this.capsules = grep(this.capsules, (capsule) => {
       let removed = !capsule.allocated;
 
       if (capsule.isNew || removed) {
@@ -90,7 +100,7 @@ TracerManager.prototype = {
       capsules
     } = this;
 
-    $.each(capsules, (i, capsule) => {
+    each(capsules, (i, capsule) => {
       let width = 100;
       let height = (100 / capsules.length);
       let top = height * capsule.order;
@@ -114,7 +124,7 @@ TracerManager.prototype = {
   },
 
   setInterval(interval) {
-    $('#interval').val(interval);
+    TopMenu.setInterval(interval);
   },
 
   reset() {
@@ -130,19 +140,19 @@ TracerManager.prototype = {
   pushStep(capsule, step) {
     if (this.stepCnt++ > stepLimit) throw "Tracer's stack overflow";
     let len = this.traces.length;
-    let last = [];
-    if (len === 0) {
-      this.traces.push(last);
-    } else {
-      last = this.traces[len - 1];
-    }
-    last.push($.extend(step, {
+    if (len == 0) len += this.newStep();
+    const last = this.traces[len - 1];
+    last.push(extend(step, {
       capsule
     }));
   },
 
-  newStep() {
-    this.traces.push([]);
+  newStep(line = -1) {
+    let len = this.traces.length;
+    if (len > 0 && ~line) {
+      this.traces[len - 1].push(line);
+    }
+    return this.traces.push([]);
   },
 
   pauseStep() {
@@ -151,13 +161,13 @@ TracerManager.prototype = {
     if (this.timer) {
       clearTimeout(this.timer);
     }
-    $('#btn_pause').addClass('active');
+    TopMenu.activateBtnPause();
   },
 
   resumeStep() {
     this.pause = false;
     this.step(this.traceIndex + 1);
-    $('#btn_pause').removeClass('active');
+    TopMenu.deactivateBtnPause();
   },
 
   step(i, options = {}) {
@@ -168,6 +178,10 @@ TracerManager.prototype = {
     this.traceIndex = i;
     const trace = this.traces[i];
     trace.forEach((step) => {
+      if (typeof step === 'number') {
+        app.getEditor().highlightLine(step);
+        return;
+      }
       step.capsule.tracer.processStep(step, options);
     });
 
@@ -178,31 +192,41 @@ TracerManager.prototype = {
     if (this.pause) return;
 
     this.timer = setTimeout(() => {
-      tracer.step(i + 1, options);
+      if (!tracer.nextStep(options)) {
+        TopMenu.resetTopMenuButtons();
+      }
     }, this.interval);
   },
 
-  prevStep() {
+  prevStep(options = {}) {
     this.command('clear');
 
     const finalIndex = this.traceIndex - 1;
     if (finalIndex < 0) {
       this.traceIndex = -1;
       this.command('refresh');
-      return;
+      return false;
     }
 
     for (let i = 0; i < finalIndex; i++) {
-      this.step(i, {
+      this.step(i, extend(options, {
         virtual: true
-      });
+      }));
     }
 
     this.step(finalIndex);
+    return true;
   },
 
-  nextStep() {
-    this.step(this.traceIndex + 1);
+  nextStep(options = {}) {
+    const finalIndex = this.traceIndex + 1;
+    if (finalIndex >= this.traces.length) {
+      this.traceIndex = this.traces.length - 1;
+      return false;
+    }
+
+    this.step(finalIndex, options);
+    return true;
   },
 
   visualize() {
@@ -212,7 +236,7 @@ TracerManager.prototype = {
 
   command(...args) {
     const functionName = args.shift();
-    $.each(this.capsules, (i, capsule) => {
+    each(this.capsules, (i, capsule) => {
       if (capsule.allocated) {
         capsule.tracer.module.prototype[functionName].apply(capsule.tracer, args);
       }
@@ -221,7 +245,7 @@ TracerManager.prototype = {
 
   findOwner(container) {
     let selectedCapsule = null;
-    $.each(this.capsules, (i, capsule) => {
+    each(this.capsules, (i, capsule) => {
       if (capsule.$container[0] === container) {
         selectedCapsule = capsule;
         return false;

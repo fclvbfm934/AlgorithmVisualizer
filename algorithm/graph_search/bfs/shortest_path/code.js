@@ -23,15 +23,15 @@ function BFS() {
     }
     return W[e];
 }
-var s = Math.random() * G.length | 0; // s = start node
+var s = Integer.random(0, G.length - 1); // s = start node
 var e; // e = start node
 do {
-    e = Math.random() * G.length | 0;
-} while (s == e);
+    e = Integer.random(0, G.length - 1);
+} while (s === e);
 var MAX_VALUE = Infinity;
 logger._print('finding the shortest path from ' + s + ' to ' + e);
 var minWeight = BFS(s);
-if (minWeight == MAX_VALUE) {
+if (minWeight === MAX_VALUE) {
     logger._print('there is no path from ' + s + ' to ' + e);
 } else {
     logger._print('the shortest path from ' + s + ' to ' + e + ' is ' + minWeight);

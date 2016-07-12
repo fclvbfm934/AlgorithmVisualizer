@@ -1,39 +1,65 @@
+'use strict';
+
 const Array2DTracer = require('./array2d');
 
-function Array1DTracer() {
-  return Array2DTracer.apply(this, arguments);
-}
-
-Array1DTracer.prototype = $.extend(true, Object.create(Array2DTracer.prototype), {
-  constructor: Array1DTracer,
-  name: "Array1DTracer",
-  _notify: function (idx, v) {
-    Array2DTracer.prototype._notify.call(this, 0, idx, v);
-    return this;
-  },
-  _denotify: function (idx) {
-    Array2DTracer.prototype._denotify.call(this, 0, idx);
-    return this;
-  },
-  _select: function (s, e) {
-    if (e === undefined) {
-      Array2DTracer.prototype._select.call(this, 0, s);
-    } else {
-      Array2DTracer.prototype._selectRow.call(this, 0, s, e);
-    }
-    return this;
-  },
-  _deselect: function (s, e) {
-    if (e === undefined) {
-      Array2DTracer.prototype._deselect.call(this, 0, s);
-    } else {
-      Array2DTracer.prototype._deselectRow.call(this, 0, s, e);
-    }
-    return this;
-  },
-  setData: function (D) {
-    return Array2DTracer.prototype.setData.call(this, [D]);
+class Array1DTracer extends Array2DTracer {
+  static getClassName() {
+    return 'Array1DTracer';
   }
-});
+
+  constructor(name) {
+    super(name);
+  }
+
+  _notify(idx, v) {
+    super._notify(0, idx, v);
+    return this;
+  }
+
+  _denotify(idx) {
+    super._denotify(0, idx);
+    return this;
+  }
+
+  _select(s, e) {
+    if (e === undefined) {
+      super._select(0, s);
+    } else {
+      super._selectRow(0, s, e);
+    }
+    return this;
+  }
+
+  _deselect(s, e) {
+    if (e === undefined) {
+      super._deselect(0, s);
+    } else {
+      super._deselectRow(0, s, e);
+    }
+    return this;
+  }
+
+  processStep(step, options) {
+    super.processStep(step, options);
+    if (this.chartTracer) {
+      const newStep = $.extend(true, {}, step);
+      newStep.capsule = this.chartTracer.capsule;
+      newStep.s = newStep.sy;
+      newStep.e = newStep.ey;
+      if (newStep.s === undefined) newStep.s = newStep.y;
+      delete newStep.x;
+      delete newStep.y;
+      delete newStep.sx;
+      delete newStep.sy;
+      delete newStep.ex;
+      delete newStep.ey;
+      this.chartTracer.processStep(newStep, options);
+    }
+  }
+
+  setData(D) {
+    return super.setData([D]);
+  }
+}
 
 module.exports = Array1DTracer;

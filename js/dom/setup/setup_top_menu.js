@@ -1,15 +1,19 @@
+'use strict';
+
 const app = require('../../app');
 const Server = require('../../server');
 const Toast = require('../toast');
+const TopMenu = require('../top_menu');
+const create = require('../../create');
 
 module.exports = () => {
 
   // shared
-  $('#shared').mouseup(function() {
+  $('#shared').mouseup(function () {
     $(this).select();
   });
 
-  $('#btn_share').click(function() {
+  $('#btn_share').click(function () {
 
     const $icon = $(this).find('.fa-share');
     $icon.addClass('fa-spin fa-spin-faster');
@@ -24,44 +28,55 @@ module.exports = () => {
 
   // control
 
-  $('#btn_run').click(() => {
-    $('#btn_trace').click();
+  const $btnRun = $('#btn_run');
+  const $btnTrace = $('#btn_trace');
+  const $btnPause = $('#btn_pause');
+  const $btnPrev = $('#btn_prev');
+  const $btnNext = $('#btn_next');
+  const $btnGenerate = $('#btn_generate');
+
+  // initially, control buttons are disabled
+  TopMenu.disableFlowControl();
+
+  $btnRun.click(() => {
+    $btnTrace.click();
+    $btnPause.removeClass('active');
+    $btnRun.addClass('active');
+    TopMenu.enableFlowControl();
     var err = app.getEditor().execute();
     if (err) {
       console.error(err);
       Toast.showErrorToast(err);
+      TopMenu.resetTopMenuButtons();
     }
   });
-  $('#btn_pause').click(function() {
+
+  $btnPause.click(() => {
+    $btnRun.toggleClass('active');
+    $btnPause.toggleClass('active');
     if (app.getTracerManager().isPause()) {
       app.getTracerManager().resumeStep();
     } else {
       app.getTracerManager().pauseStep();
     }
   });
-  $('#btn_prev').click(() => {
+
+  $btnPrev.click(() => {
+    $btnRun.removeClass('active');
+    $btnPause.addClass('active');
     app.getTracerManager().pauseStep();
     app.getTracerManager().prevStep();
   });
-  $('#btn_next').click(() => {
+
+  $btnNext.click(() => {
+    $btnRun.removeClass('active');
+    $btnPause.addClass('active');
     app.getTracerManager().pauseStep();
     app.getTracerManager().nextStep();
   });
 
-  // description & trace
-
-  $('#btn_desc').click(function() {
-    $('.tab_container > .tab').removeClass('active');
-    $('#tab_desc').addClass('active');
-    $('.tab_bar > button').removeClass('active');
-    $(this).addClass('active');
-  });
-
-  $('#btn_trace').click(function() {
-    $('.tab_container > .tab').removeClass('active');
-    $('#tab_module').addClass('active');
-    $('.tab_bar > button').removeClass('active');
-    $(this).addClass('active');
+  $btnGenerate.click(() => {
+     create.init();
   });
 
 };
